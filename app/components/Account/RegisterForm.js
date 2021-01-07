@@ -36,12 +36,10 @@ const RegisterForm = (props) => {
         else {
             setLoading(true);
             firebase.auth().createUserWithEmailAndPassword(formData.email, formData.password).then(response => {
-                console.log(response);
                 setLoading(false);
                 navigation.navigate('account');
             })
             .catch(err => {
-                console.log('error: ', err);
                 setLoading(false);
                 toastRef.current.show('Email already registered');
             });

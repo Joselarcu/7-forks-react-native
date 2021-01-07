@@ -36,7 +36,6 @@ const LoginForm = (props) => {
         }
         else {
             setLoading(true);
-            console.log(formData);
             firebase.auth().signInWithEmailAndPassword(formData.email, formData.password)
             .then(() =>{
                 setLoading(false);

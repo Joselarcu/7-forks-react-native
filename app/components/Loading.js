@@ -5,7 +5,6 @@ import { Overlay } from 'react-native-elements';
 const Loading = (props) => {
 
     const { isVisible, text } = props;
-    console.log('isVisible:', isVisible);
     return(
         <Overlay isVisible={isVisible} windowBackgroundColor='rgba(0,0,0,0.5)' overlayBackgroundColor='transparent' overlayStyle={styles.overlay}>
             <View style={styles.view}>
