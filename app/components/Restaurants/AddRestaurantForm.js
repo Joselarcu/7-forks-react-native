@@ -19,6 +19,7 @@ const AddRestaurantForm = (props) => {
     const [restaurantDescription, setRestaurantDescription] = useState('')
     const [imagesSelected, setImagesSelected] = useState([])
     const [isMapVisible, setIsMapVisible] = useState(false)
+    const [locationRestaurant, setLocationRestaurant] = useState(null)
 
     const addRestaurant = () => {
         console.log('OK')
@@ -26,6 +27,7 @@ const AddRestaurantForm = (props) => {
         console.log('Restaurant Adress:', restaurantAddress)
         console.log('Restaurant Description:', restaurantDescription)
         console.log('Images selected:', imagesSelected)
+        console.log('LocationRestaurant', locationRestaurant);
     }
 
     return (
@@ -34,7 +36,7 @@ const AddRestaurantForm = (props) => {
             <FormAdd setRestaurantName={setRestaurantName} setRestaurantAddress={setRestaurantAddress} setRestaurantDescription={setRestaurantDescription} setIsMapVisible={setIsMapVisible}/>
             <UploadImage toastRef={toastRef} imagesSelected={imagesSelected} setImagesSelected={setImagesSelected}  />
             <Button title="Create restaurant" onPress={addRestaurant} buttonStyle={styles.btnAddRestaurant} />
-            <Map isMapVisible={isMapVisible} setIsMapVisible={setIsMapVisible} />
+            <Map isMapVisible={isMapVisible} setIsMapVisible={setIsMapVisible} setLocationRestaurant={setLocationRestaurant} toastRef={toastRef} />
         </ScrollView>
     )
 }
@@ -60,7 +62,7 @@ function ImageRestaurant(props) {
 }
 
 function Map(props) {
-    const {isMapVisible, setIsMapVisible} = props;
+    const { isMapVisible, setIsMapVisible, setLocationRestaurant, toastRef} = props;
     const [location, setLocation] = useState(null)
 
     useEffect(() => {
@@ -76,12 +78,29 @@ function Map(props) {
         })()
     }, [])
 
+    const confirmLocation = () => {
+        setLocationRestaurant(location)
+        toastRef.current.show("Location saved successfully");
+        setIsMapVisible(false);
+    }
+
     return (
         <Modal isVisible={isMapVisible} setIsVisible={setIsMapVisible}>
             <View>
-                {location && (<MapView style={styles.mapStyle} initialRegion={location} showUserLocation={true} onRegionChange={(region) => setLocation(region)}>
-                    <MapView.Marker coordinate={{latitude: location.latitude, longitude: location.longitude}} draggable ></MapView.Marker>
-                </MapView>)}
+                {location && (
+                    <MapView 
+                        style={styles.mapStyle} 
+                        initialRegion={location} 
+                        showUserLocation={true} 
+                        onRegionChange={(region) => setLocation(region)}>
+                            
+                        <MapView.Marker coordinate={{latitude: location.latitude, longitude: location.longitude}} draggable ></MapView.Marker>
+                    </MapView>
+                    )}
+                    <View style={styles.viewMapBtn}>
+                    <Button title="Save location" containerStyle={styles.viewMapBtnContainerSave} buttonStyle={styles.viewMapBtnSave} onPress={confirmLocation} />
+                    <Button title="Cancel"  containerStyle={styles.viewMapBtnContainerCancel} buttonStyle={styles.viewMapBtnCancel} onPress={() => setIsMapVisible(false)}/>
+                    </View>
             </View>
         </Modal>
     )
@@ -112,7 +131,6 @@ function UploadImage(props) {
 
     const removeImage = (image) => {
        
-
         Alert.alert("Delete image","Are you sure you want to delete the image?",[
             {text: "Cancel", style: "cancel"},
             {text: "Delete", onPress: () => { 
@@ -185,7 +203,23 @@ const styles = StyleSheet.create({
     mapStyle: {
         width: "100%",
         height: 550
-
+    },
+    viewMapBtn: {
+        flexDirection: 'row',
+        justifyContent: "center",
+        marginTop: 10
+    },
+    viewMapBtnContainerCancel:  {
+        paddingLeft: 5
+    },
+    viewMapBtnCancel: {
+        backgroundColor: '#a60d0d'
+    },
+    viewMapBtnContainerSave: {
+        paddingRight: 5
+    },
+    viewMapBtnSave: {
+        backgroundColor: "#00a600"
     }
 
 })

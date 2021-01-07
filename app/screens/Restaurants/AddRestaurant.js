@@ -12,7 +12,7 @@ const AddRestaurant = (props) => {
 
     return (
         <View>
-            <AddRestaurantForm tastRef={toastRef} setIsLoading={setIsLoading} navigation={navigation}/>
+            <AddRestaurantForm toastRef={toastRef} setIsLoading={setIsLoading} navigation={navigation}/>
             <Toast ref={toastRef} position="center" opacity={0.9} />
             <Loading isVisible={isLoading} text="Creating restaurant" />
         </View>
