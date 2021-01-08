@@ -1,5 +1,5 @@
 import React, {useState, useEffect} from 'react';
-import { StyleSheet, View, ScrollView, Dimensions, Text} from 'react-native';
+import { StyleSheet, View, ScrollView, Dimensions} from 'react-native';
 import { Icon, Avatar, Input, Button, Image } from 'react-native-elements';
 import * as Permissions from 'expo-permissions';
 import * as ImagePicker from 'expo-image-picker';
@@ -7,7 +7,11 @@ import *  as Location from 'expo-location';
 import { map, size, filter } from 'lodash';
 import { Alert } from 'react-native';
 import MapView from "react-native-maps";
+import uuid from "random-uuid-v4";
 import Modal from "../../components/Account/Modal";
+import { firebaseApp } from "../../utils/firebase";
+import firebase from "firebase/app";
+import "firebase/storage";
 
 const widthScreen = Dimensions.get("window").width;
 
@@ -22,18 +26,42 @@ const AddRestaurantForm = (props) => {
     const [locationRestaurant, setLocationRestaurant] = useState(null)
 
     const addRestaurant = () => {
-        console.log('OK')
-        console.log('Restaurant Name:', restaurantName)
-        console.log('Restaurant Adress:', restaurantAddress)
-        console.log('Restaurant Description:', restaurantDescription)
-        console.log('Images selected:', imagesSelected)
-        console.log('LocationRestaurant', locationRestaurant);
+       if(!restaurantName || !restaurantDescription || !restaurantAddress){
+           toastRef.current.show("All the inputs are required");
+       } else if( size(imagesSelected) === 0){
+           toastRef.current.show("Restaurant must have at least one picture");
+       } else if (!locationRestaurant){
+           toastRef.current.show("Address is required")
+       } else {
+           setIsLoading(true);
+           uploadImageStorage().then(response => {
+               setIsLoading(false);
+           });
+       }
+    };
+
+    const uploadImageStorage =  async () => {
+        const imageBlob = [];
+
+        await Promise.all(
+            map(imagesSelected, async image => {
+                const response = await fetch(image);
+                const blob = await response.blob();
+                const ref = firebase.storage().ref("restaurants").child(uuid());
+                await ref.put(blob).then( async result => {
+                    await firebase.storage().ref(`restaurants/${result.metadata.name}`).getDownloadURL().then(photoUrl => {
+                        imageBlob.push(photoUrl);
+                    })
+                })
+            })
+        )
+        return imageBlob;
     }
 
     return (
         <ScrollView style={styles.scrollView}>
             <ImageRestaurant  imageRestaurant={imagesSelected[0]}/>
-            <FormAdd setRestaurantName={setRestaurantName} setRestaurantAddress={setRestaurantAddress} setRestaurantDescription={setRestaurantDescription} setIsMapVisible={setIsMapVisible}/>
+            <FormAdd setRestaurantName={setRestaurantName} setRestaurantAddress={setRestaurantAddress} setRestaurantDescription={setRestaurantDescription} setIsMapVisible={setIsMapVisible} locationRestaurant={locationRestaurant}/>
             <UploadImage toastRef={toastRef} imagesSelected={imagesSelected} setImagesSelected={setImagesSelected}  />
             <Button title="Create restaurant" onPress={addRestaurant} buttonStyle={styles.btnAddRestaurant} />
             <Map isMapVisible={isMapVisible} setIsMapVisible={setIsMapVisible} setLocationRestaurant={setLocationRestaurant} toastRef={toastRef} />
@@ -41,12 +69,12 @@ const AddRestaurantForm = (props) => {
     )
 }
 function FormAdd(props) {
-    const { setRestaurantName, setRestaurantAddress, setRestaurantDescription, setIsMapVisible } = props
+    const { setRestaurantName, setRestaurantAddress, setRestaurantDescription, setIsMapVisible, locationRestaurant } = props
     return (
         <View style={styles.viewForm}>
             <Input placeholder="Restaurant name" containerStyle={styles.input} onChange={e => setRestaurantName(e.nativeEvent.text)}  />
             <Input placeholder="Address" containerStyle={styles.input} onChange={e => setRestaurantAddress(e.nativeEvent.text)}
-                rightIcon={{ type: "material-community", name: "google-maps", color: "#c2c2c2", onPress: () => { setIsMapVisible(true)}}}/>
+                rightIcon={{ type: "material-community", name: "google-maps", color: locationRestaurant ? "#00a680" : "#c2c2c2", onPress: () => { setIsMapVisible(true)}}}/>
             <Input placeholder="Restaurant Description" multiline={true} inputContainerStyle={styles.textArea} containerStyle={styles.input} onChange={e => setRestaurantDescription(e.nativeEvent.text)}/>
         </View>
     )
